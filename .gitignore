@@ -1,0 +1,6 @@
+.idea
+/ProtoGenTool/bin
+/ProtoGenTool/obj
+*.DotSettings
+*.DotSettings.user
+.DS_Store
