@@ -10,9 +10,24 @@ class Program
     
     static void Main(string[] args)
     {
-        var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json",optional:true,reloadOnChange:true).Build();
         var options = new Options();
-        configuration.GetSection("ProtoGeneratorOptions").Bind(options);
+        if (args.Length > 0)
+        {
+            var configFile = GetAbsolutePath(args[0]);
+            if (!File.Exists(configFile))
+            {
+                Console.WriteLine($"File {configFile} not found !!!");
+                return;
+            }
+            Console.WriteLine($"Reading config file {configFile}......");
+            var configuration = new ConfigurationBuilder().AddJsonFile(configFile, optional: true, reloadOnChange: true).Build();
+            configuration.GetSection("ProtoGeneratorOptions").Bind(options);
+        }
+        else
+        {
+            Console.WriteLine("Cannot find config file !!!");
+            return;
+        }
         
         var parseInfo = new ParseInfo
         {
@@ -30,7 +45,7 @@ class Program
             Infos = new List<EnumInfo>()
         };
 
-        var protoFiles = Directory.EnumerateFiles(Path.Combine(CurDir,options.ProtoDir), "*.proto", SearchOption.AllDirectories)
+        var protoFiles = Directory.EnumerateFiles(GetAbsolutePath(options.ProtoDir), "*.proto", SearchOption.AllDirectories)
             .ToList();
 
         if (protoFiles.Count == 0)
@@ -40,8 +55,8 @@ class Program
         }
         
         // 删除目标文件夹下所有文件
-        var outputDir1 = Path.Combine(CurDir,options.TmpOutput);
-        var outputDir2 = Path.Combine(CurDir,options.CustomMsgOutput);
+        var outputDir1 = GetAbsolutePath(options.TmpOutput);
+        var outputDir2 = GetAbsolutePath(options.CustomMsgOutput);
         if (Directory.Exists(outputDir1)) Directory.Delete(outputDir1,true);
         if (Directory.Exists(outputDir2)) Directory.Delete(outputDir2,true);
 
@@ -158,7 +173,7 @@ class Program
 
     static void GenerateProtoCode(Options options, ParseInfo info)
     {
-        var templateFile = Path.Combine(CurDir,options.MsgTmp);
+        var templateFile = GetAbsolutePath(options.MsgTmp);
         if (!File.Exists(templateFile))
         {
             Console.WriteLine($"Template file not exist: {templateFile}");
@@ -167,12 +182,12 @@ class Program
         var templateContent = File.ReadAllText(templateFile);
         var output = Template.Parse(templateContent).Render(info);
         var templateExtension = Path.GetExtension(templateFile);
-        SaveFile(Path.Combine(CurDir,options.TmpOutput), $"{options.TypeFileName}{templateExtension}", output);
+        SaveFile(GetAbsolutePath(options.TmpOutput), $"{options.TypeFileName}{templateExtension}", output);
     }
 
     static void GenerateEnumCode(Options options, ParseEnumInfo info)
     {
-        var templateFile = Path.Combine(CurDir,options.EnumTmp);
+        var templateFile = GetAbsolutePath(options.EnumTmp);
         if (!File.Exists(templateFile))
         {
             Console.WriteLine($"Template file not exist: {templateFile}");
@@ -182,12 +197,12 @@ class Program
         var templateContent = File.ReadAllText(templateFile);
         var output = Template.Parse(templateContent).Render(info);
         var templateExtension = Path.GetExtension(templateFile);
-        SaveFile(Path.Combine(CurDir,options.TmpOutput), $"{options.EnumFileName}{templateExtension}", output);
+        SaveFile(GetAbsolutePath(options.TmpOutput), $"{options.EnumFileName}{templateExtension}", output);
     }
 
     static void GenerateCustomCode(Options options, ParseInfo info)
     {
-        var templatePath = Path.Combine(CurDir,options.CustomTmp);
+        var templatePath = GetAbsolutePath(options.CustomTmp);
         var templateExtension = Path.GetExtension(templatePath);
         var templateContent = File.ReadAllText(templatePath);
         var template = Template.Parse(templateContent);
@@ -204,7 +219,7 @@ class Program
             });
             var output = template.Render(context);
             var fileName = $"{protocol.ProtocolName}{options.CustomMsgSubFix}{templateExtension}";
-            SaveFile(Path.Combine(CurDir,options.CustomMsgOutput), fileName, output);
+            SaveFile(GetAbsolutePath(options.CustomMsgOutput), fileName, output);
         }
     }
 
@@ -221,6 +236,11 @@ class Program
         File.WriteAllText(filePath, content);
         Console.WriteLine($"File generate success: {filePath}");
     }
+
+    static string GetAbsolutePath(string inputPath)
+    {
+        return Path.IsPathRooted(inputPath) ? inputPath : Path.Combine(CurDir, inputPath);
+    }
 }
 
 public class Options
@@ -231,8 +251,8 @@ public class Options
     public string EnumNamespace { get; set; } = "Generate.Enum";
     public string TmpOutput { get; set; } = "./CSharp/";
     public string CustomMsgOutput { get; set; } = "./CSharp/Msg/";
-    public string TypeFileName { get; set; } = "ProtoType.cs";
-    public string EnumFileName { get; set; } = "ProtoEnum.cs";
+    public string TypeFileName { get; set; } = "ProtoType";
+    public string EnumFileName { get; set; } = "ProtoEnum";
     public string CustomMsgSubFix { get; set; } = "Msg.cs";
     public string MsgTmp { get; set; } = "./Template/CSharp.cs";
     public string EnumTmp { get; set; } = "./Template/CSharpEnum.cs";

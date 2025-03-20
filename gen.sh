@@ -4,7 +4,9 @@ PROTOC="./Tools/protoc/mac/protoc"
 PROTO_FILES="./Proto"
 PROTO_GEN="./CSharp/ProtoGen"
 
-dotnet $TOOL_DIR
+SETTING_FILE="./appsettings.json"
+
+dotnet $TOOL_DIR $SETTING_FILE
 
 function getproto(){
     for element in `ls $1`

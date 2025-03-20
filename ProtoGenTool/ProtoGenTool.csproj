@@ -20,7 +20,7 @@
     <ItemGroup>
       <None Include="bin\Debug\net8.0\appsettings.json" />
       <None Update="appsettings.json">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       </None>
       <Compile Remove="Template\CSharp.cs" />
       <Compile Remove="Template\CSharpEnum.cs" />

@@ -4,7 +4,9 @@ set PROTOC=.\Tools\protoc\win\protoc.exe
 set PROTO_FILES=.\Proto
 set PROTO_GEN=.\CSharp\ProtoGen
 
-dotnet %TOOL_DIR%
+set SETTING_FILE=.\appsettings.json
+
+dotnet %TOOL_DIR% %SETTING_FILE%
 
 if exist %PROTO_GEN% (
     rd /s /q %PROTO_GEN%
